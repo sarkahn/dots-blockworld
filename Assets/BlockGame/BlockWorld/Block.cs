@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public struct GenerateChunkTest : IComponentData
+public struct Block : IComponentData
 {
+    public int type;
 }
