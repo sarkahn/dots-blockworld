@@ -13,7 +13,15 @@ public static class GridMath
         {
             return p.y * size.x + p.x;
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 CellPosFromArrayIndex(int i, int2 cellSize)
+        {
+            int x = i % cellSize.x;
+            int y = (int)math.floor(i / cellSize.x);
+
+            return new int2(x, y);
+        }
     }
 
     public static class Grid3D
