@@ -174,6 +174,8 @@ namespace BlockWorld.EditorTests
             }
         }
 
+        protected EntityQuery GetEntityQuery(params ComponentType[] types) => EmptySystem.GetEntityQuery(types);
+
         public EmptySystem EmptySystem
         {
             get

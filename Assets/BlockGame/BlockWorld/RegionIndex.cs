@@ -5,11 +5,11 @@ using Unity.Mathematics;
 
 namespace BlockWorld
 {
-    public struct RegionIndex : ISharedComponentData
+    public struct RegionIndexShared : ISharedComponentData
     {
         public int2 value;
-        public static implicit operator int2(RegionIndex e) => e.value;
-        public static implicit operator RegionIndex(int2 v) => new RegionIndex { value = v };
+        public static implicit operator int2(RegionIndexShared e) => e.value;
+        public static implicit operator RegionIndexShared(int2 v) => new RegionIndexShared { value = v };
     }
 
 }

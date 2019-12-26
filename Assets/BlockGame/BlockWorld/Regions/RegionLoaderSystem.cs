@@ -10,7 +10,7 @@ using UnityEngine;
 namespace BlockWorld
 {
     [AlwaysSynchronizeSystem]
-    public class RegionLoaderSystem : JobComponentSystem
+    public class RegionSystem : JobComponentSystem
     {
         Dictionary<int2, Entity> _regionMap = new Dictionary<int2, Entity>();
         NativeHashMap<int3, Entity> _chunkMap;
@@ -18,6 +18,7 @@ namespace BlockWorld
         NativeList<int2> _previousCells;
 
         EntityQuery _regionQuery;
+        EntityQuery _chunkQuery;
 
         BeginSimulationEntityCommandBufferSystem _ecbSystem;
 
@@ -27,6 +28,11 @@ namespace BlockWorld
             _chunkMap = new NativeHashMap<int3, Entity>(10, Allocator.Persistent);
 
             _ecbSystem = World.GetOrCreateSystem<BeginSimulationEntityCommandBufferSystem>();
+
+            _chunkQuery = GetEntityQuery(
+                ComponentType.ReadWrite<BlockBuffer>(),
+                ComponentType.ReadOnly<BlockChunkIndex>()
+                );
         }
 
         protected override void OnDestroy()
@@ -92,7 +98,7 @@ namespace BlockWorld
                     var em = EntityManager;
                     _regionMap[targetRegionIndex] = regionEntity = em.CreateEntity();
                     em.SetName(regionEntity, $"Region {targetRegionIndex.ToString()}");
-                    em.AddSharedComponentData<RegionIndex>(regionEntity, targetRegionIndex);
+                    em.AddSharedComponentData<RegionIndexShared>(regionEntity, targetRegionIndex);
                     em.AddComponentData(regionEntity, new GenerateHeightMap { regionIndex = targetRegionIndex });
                 }
 
@@ -107,6 +113,7 @@ namespace BlockWorld
             //   - How do we account for a case where we want to write to a chunk
             //   - that doesn't exist? IE: If we nerd pole straight up, how do we handle
             //   - the case where the column crosses chunks?
+            //   - Or if an item wants to place a row of blocks that crosses multiple chunks (and regions)
 
             //   - My gut feeling is the "ApplyBlockDeltasBatchJob" - a job that takes a list
             //   - of block deltas and does everything - generate the chunks on the fly as deltas are
@@ -135,24 +142,33 @@ namespace BlockWorld
 
             if( Input.GetButtonDown("Fire1"))
             {
-                var deltas = new NativeList<BlockDelta>(Allocator.TempJob);
 
-                for( int i = 0; i < 10; ++i )
-                {
-                    deltas.Add(new BlockDelta { BlockType = 1, WorldPos = new int3(i, 0, 0) });
-                }
+                inputDeps = Entities
+                    .ForEach((ref DynamicBuffer<BlockBuffer> BlockBuffer) =>
+                    {
 
-                inputDeps = new ApplyRegionBlockDeltasJob
-                {
-                    CommandBuffer = _ecbSystem.CreateCommandBuffer(),
-                    BlockBufferFromEntity = GetBufferFromEntity<BlockBuffer>(false),
-                    ChunkMap = _chunkMap,
-                    Deltas = deltas,
-                }.Schedule(inputDeps);
+                    }).Schedule(inputDeps);
 
-                deltas.Dispose(inputDeps);
+                
 
-                _ecbSystem.AddJobHandleForProducer(inputDeps);
+                //var deltas = new NativeList<BlockDelta>(Allocator.TempJob);
+
+                //for( int i = 0; i < 10; ++i )
+                //{
+                //    deltas.Add(new BlockDelta { BlockType = 1, WorldPos = new int3(i, 0, 0) });
+                //}
+
+                //inputDeps = new ApplyRegionBlockDeltasJob
+                //{
+                //    CommandBuffer = _ecbSystem.CreateCommandBuffer(),
+                //    BlockBufferFromEntity = GetBufferFromEntity<BlockBuffer>(false),
+                //    ChunkMap = _chunkMap,
+                //    Deltas = deltas,
+                //}.Schedule(inputDeps);
+
+                //deltas.Dispose(inputDeps);
+
+                //_ecbSystem.AddJobHandleForProducer(inputDeps);
             }
 
 

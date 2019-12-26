@@ -7,7 +7,7 @@ using Unity.Entities;
 
 namespace BlockWorld
 {
-    public struct ApplyRegionBlockDeltasJob : IJob
+    public struct ApplyBlockDeltasBatchJob
     {
         public EntityCommandBuffer CommandBuffer;
 
