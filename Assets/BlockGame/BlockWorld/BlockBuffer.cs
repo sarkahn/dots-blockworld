@@ -8,8 +8,8 @@ namespace BlockWorld
     [Serializable]
     public struct BlockBuffer : IBufferElementData
     {
-        public Entity value;
-        public static implicit operator Entity(BlockBuffer e) => e.value;
-        public static implicit operator BlockBuffer(Entity v) => new BlockBuffer{ value = v };
+        public short value;
+        public static implicit operator short(BlockBuffer e) => e.value;
+        public static implicit operator BlockBuffer(short v) => new BlockBuffer{ value = v };
     }
 }

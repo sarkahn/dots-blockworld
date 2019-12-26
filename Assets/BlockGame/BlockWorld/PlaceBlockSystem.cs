@@ -24,12 +24,12 @@ namespace BlockWorld
 
             _placeBlocksQuery = GetEntityQuery(
                 ComponentType.ReadOnly<PlaceBlock>(),
-                ComponentType.ReadOnly<ChunkIndex>()
+                ComponentType.ReadOnly<BlockChunkIndex>()
                 );
 
             _bufferQuery = GetEntityQuery(
                 ComponentType.ReadWrite<BlockBuffer>(),
-                ComponentType.ReadOnly<ChunkIndex>()
+                ComponentType.ReadOnly<BlockChunkIndex>()
                 );
         }
 
@@ -50,7 +50,7 @@ namespace BlockWorld
                 for( int i = 0; i < blockDeltas.Length; ++i )
                 {
                     var delta = blockDeltas[i];
-                    int blockIndex = GridMath.Grid3D.ArrayIndexFromWorldPos(delta.pos, Constants.ChunkSize);
+                    int blockIndex = GridMath.Grid3D.ArrayIndexFromWorldPos(delta.pos, Constants.BlockChunks.Size);
                     var blockEntity = buffer[blockIndex];
                     var block = blockFromEntity[blockEntity];
                     block.type = delta.blockType;
@@ -71,20 +71,20 @@ namespace BlockWorld
                 .ForEach(
                 (Entity e, in PlaceBlock pb) =>
                 {
-                    int3 chunkIndex = GridMath.Grid3D.CellIndex(pb.pos, Constants.ChunkSize);
+                    int3 chunkIndex = GridMath.Grid3D.CellIndexFromWorldPos(pb.pos, Constants.BlockChunks.Size);
                     if (!indices.Contains(chunkIndex))
                         indices.Add(chunkIndex);
-                    EntityManager.AddSharedComponentData<ChunkIndex>(e, chunkIndex);
+                    EntityManager.AddSharedComponentData<BlockChunkIndex>(e, chunkIndex);
                 }).Run();
 
             var blockFromEntity = GetComponentDataFromEntity<Block>(false);
             for( int i = 0; i < indices.Length; ++i )
             {
                 var chunkIndex = indices[i];
-                _placeBlocksQuery.SetSharedComponentFilter<ChunkIndex>(chunkIndex);
+                _placeBlocksQuery.SetSharedComponentFilter<BlockChunkIndex>(chunkIndex);
                 var deltas = _placeBlocksQuery.ToComponentDataArray<PlaceBlock>(Allocator.TempJob);
 
-                _bufferQuery.SetSharedComponentFilter<ChunkIndex>(chunkIndex);
+                _bufferQuery.SetSharedComponentFilter<BlockChunkIndex>(chunkIndex);
 
                 inputDeps = new ProcessBlockDeltas
                 {

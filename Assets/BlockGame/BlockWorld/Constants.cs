@@ -3,14 +3,23 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace BlockWorld
+namespace BlockWorld.Constants
 {
-    public static class Constants
+    public static class BlockChunks
     {
-        public const int ChunkSizeX = 16;
-        public const int ChunkSizeY = 16;
-        public const int ChunkSizeZ = 16;
-        public const int ChunkVolume = ChunkSizeX * ChunkSizeY * ChunkSizeZ;
-        public static int3 ChunkSize => new int3(ChunkSizeX, ChunkSizeY, ChunkSizeZ);
+        public const int SizeX = 16;
+        public const int SizeY = 16;
+        public const int SizeZ = 16;
+        public const int Volume = SizeX * SizeY * SizeZ;
+        public static int3 Size => new int3(SizeX, SizeY, SizeZ);
+    }
+
+    public static class Regions
+    {
+        public const int SizeX = BlockChunks.SizeX;
+        public const int SizeZ = BlockChunks.SizeZ;
+        public const int Volume = SizeX * SizeZ;
+        public const int Height = 256;
+        public static int2 Size => new int2(SizeX, SizeZ);
     }
 }

@@ -66,7 +66,7 @@ namespace BlockWorld
         Entity MakeChunkEntity(int3 index)
         {
             var e = EntityManager.CreateEntity();
-            EntityManager.AddSharedComponentData<ChunkIndex>(e, index);
+            EntityManager.AddSharedComponentData<BlockChunkIndex>(e, index);
             EntityManager.SetName(e, $"Chunk {index.x}, {index.y}, {index.z}");
             return e;
         }
@@ -87,7 +87,7 @@ namespace BlockWorld
 
             uninitializedChunks = GetEntityQuery(new EntityQueryDesc
             {
-                All = new ComponentType[] {typeof(ChunkIndex)},
+                All = new ComponentType[] {typeof(BlockChunkIndex)},
                 None = new ComponentType[] {typeof(ChunkHeight)}
             });
         }
