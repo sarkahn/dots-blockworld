@@ -1,2 +1,5 @@
-# dots-blockworld
-A block world game using Unity DOTS and ECS. Because someone had to do it.
+# Voxel Game Prototype in Unity ECS
+
+This is a prototype of a Minecraft-style voxel game in Unity's ECS framework.
+
+![](Images/example.gif)
