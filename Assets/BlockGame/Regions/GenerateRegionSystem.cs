@@ -114,7 +114,6 @@ namespace BlockGame.BlockWorld
                 in RegionHeightMap heightMap, in RegionIndex regionIndex
                 ) =>
                 {
-                    //var heightMap = heightMapBuffer.Reinterpret<int>().AsNativeArray();
                     ref var hmArray = ref heightMap.Array;
                     int maxHeight = int.MinValue;
                     int maxHeightIndex = -1;
@@ -129,6 +128,10 @@ namespace BlockGame.BlockWorld
                         }
                     }
 
+                    var playbackBuffer = commandBuffer.SetBuffer<LinkedEntityGroup>(entityInQueryIndex, e);
+                    if (linkedGroup.Length > 0)
+                        playbackBuffer.AddRange(linkedGroup.AsNativeArray());
+
                     for (int y = 0; y < maxHeight; y += Constants.ChunkHeight)
                     {
                         var chunkEntity = commandBuffer.CreateEntity(entityInQueryIndex, chunkArchetype);
@@ -137,16 +140,8 @@ namespace BlockGame.BlockWorld
                         commandBuffer.AddComponent<RegionIndex>(entityInQueryIndex, chunkEntity, regionIndex);
                         commandBuffer.AddComponent<GameChunk>(entityInQueryIndex, chunkEntity);
                         commandBuffer.AddComponent<GenerateChunk>(entityInQueryIndex, chunkEntity);
-                        //commandBuffer.AddComponent<Disabled>(entityInQueryIndex, chunkEntity);
 
-                        var playbackBuffer = commandBuffer.SetBuffer<LinkedEntityGroup>(entityInQueryIndex, e);
-                        if( linkedGroup.Length > 0 )
-                            playbackBuffer.AddRange(linkedGroup.AsNativeArray());
                         playbackBuffer.Add(chunkEntity);
-                        //commandBuffer.AddComponent<LinkToEntity>(entityInQueryIndex, chunkEntity, new LinkToEntity
-                        //{
-                        //    target = e
-                        //});
                     }
 
                     commandBuffer.RemoveComponent<GenerateRegionChunks>(entityInQueryIndex, e);

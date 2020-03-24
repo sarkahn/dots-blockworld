@@ -50,21 +50,21 @@ namespace BlockGame.BlockWorld
 
             // Sand
             if (height <= sandHeight)
-                block.blockType = ids.sand;
+                block = ids.sand;
             // Dirt
             else if (height <= dirtHeight )
-                block.blockType = ids.dirt;
+                block = ids.dirt;
             // Grass
             else if (height <= grassHeight )
             {
                 if (height == maxHeight)
-                    block.blockType = ids.grass;
+                    block = ids.grass;
                 else
-                    block.blockType = ids.dirt;
+                    block = ids.dirt;
             }
             // Stone
             else if (height < stonHeight )
-                block.blockType = ids.stone;
+                block = ids.stone;
 
             return block;
         }
