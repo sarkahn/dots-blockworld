@@ -108,15 +108,16 @@ namespace BlockGame.BlockWorld
 								if (curr.blockType == 0)
 									continue;
 
-								for (int dirIndex = 0; dirIndex < directions.Length; ++dirIndex)
+								for (int dirIndex = 0; dirIndex < GridUtil.Grid3D.Directions.Length; ++dirIndex)
 								{
-									var adj = GetBlockType(p + directions[dirIndex], blocks);
+									var dir = GridUtil.Grid3D.Directions[dirIndex];
+									var adj = GetBlockType(p + dir, blocks);
 
 									if( !IsOpaque(adj))
 									{
 										ref var faceUVs = ref blockUVMap.GetUVs(curr.blockType, dirIndex);
 
-										BuildFace(p, directions[dirIndex], verts, indices, uvs, ref faceUVs);
+										BuildFace(p, dir, verts, indices, uvs, ref faceUVs);
 									}
 								}
 							}
@@ -265,17 +266,5 @@ namespace BlockGame.BlockWorld
 
 			return default;
 		}
-
-		// Not sure why this works in burst (managed array) but it does. Whatever
-		public static readonly int3[] directions =
-			new int3[]
-			{
-					new int3(0, 1, 0), // Up
-					new int3(0, -1, 0), // Down
-					new int3(-1, 0, 0), // Left
-					new int3(1, 0, 0), // Right
-					new int3(0, 0, 1), // Forward
-					new int3(0, 0, -1), // Back
-			};
 	}
 }
