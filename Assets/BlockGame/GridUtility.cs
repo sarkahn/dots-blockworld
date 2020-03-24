@@ -48,6 +48,14 @@ public static class GridUtil
         public static int PosToIndex(int x, int z) => z * Constants.ChunkSizeX + x;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 IndexToPos(int i)
+        {
+            int x = i % Constants.ChunkSizeX;
+            int y = i / Constants.ChunkSizeX;
+            return new int2(x, y);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int PosToIndex(int2 pos) => PosToIndex(pos.x, pos.y);
 
         public static readonly int2[] orthogonalDirections = new int2[]

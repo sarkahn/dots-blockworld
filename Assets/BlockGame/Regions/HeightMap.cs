@@ -37,17 +37,15 @@ namespace BlockGame.BlockWorld
 			float persistence = settings.persistence;
 			float scale = settings.scale;
 
-			for (int x = 0; x < size.x; ++x)
-				for (int z = 0; z < size.y; ++z)
-				{
-					float h = NoiseUtil.SumOctave(
-						worldPos.x + x, worldPos.y + z,
-						iterations, persistence, scale, minHeight, maxHeight);
+			for( int i = 0; i < values.Length; ++i )
+			{
+				int2 xz = GridUtil.Grid2D.IndexToPos(i);
+				float h = NoiseUtil.SumOctave(
+					worldPos.x + xz.x, worldPos.y + xz.y,
+					iterations, persistence, scale, minHeight, maxHeight);
 
-					int2 localPos = new int2(x, z);
-					int i = GridUtil.Grid2D.PosToIndex(localPos);
-					values[i] = (int)math.floor(h);
-				}
+				values[i] = (int)math.floor(h);
+			}
 
 			var rootRef = builder.CreateBlobAssetReference<HeightMap>(allocator);
 

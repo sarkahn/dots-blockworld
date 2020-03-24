@@ -45,9 +45,6 @@ namespace BlockGame.BlockWorld
 			if (settingsUI != null)
 				settings = settingsUI.Settings;
 
-			//var map = _regionMap;
-			//var mapWriter = map.AsParallelWriter();
-
 			var ecb = _barrier.CreateCommandBuffer().ToConcurrent();
 
 			var regionArchetype = _regionArchetype;

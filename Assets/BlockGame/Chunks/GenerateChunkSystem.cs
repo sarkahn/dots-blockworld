@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Collections;
+using Unity.Profiling;
 
 namespace BlockGame.BlockWorld
 {
@@ -84,6 +85,7 @@ namespace BlockGame.BlockWorld
 
             var blockIDs = GetBlockIDs();
 
+            ProfilerMarker marker = new ProfilerMarker("InitChunkBlocks");
             Entities
                 .WithName("InitializeChunkBlocks")
                 .WithAll<GenerateChunk>()
@@ -96,26 +98,23 @@ namespace BlockGame.BlockWorld
 
                     ref var heightMap = ref heightMapBlob.Array;
 
-                    for( int x = 0; x < Constants.ChunkSizeX; ++x )
-                        for( int z = 0; z < Constants.ChunkSizeZ; ++z )
-                        {
-                            int xzIndex = GridUtil.Grid2D.PosToIndex(x, z);
+                    for( int i = 0; i < blocks.Length; ++i )
+                    {
+                        int3 xyz = GridUtil.Grid3D.IndexToPos(i);
+                        int x = xyz.x;
+                        int y = xyz.y;
+                        int z = xyz.z;
 
-                            int maxHeight = heightMap[xzIndex];
+                        int xzIndex = GridUtil.Grid2D.PosToIndex(x, z);
 
-                            for( int y = 0; y < Constants.ChunkSizeY; ++y )
-                            {
-                                int xyzIndex = GridUtil.Grid3D.PosToIndex(x, y, z);
+                        int maxHeight = heightMap[xzIndex];
+                        int height = y + chunkWorldHeight;
 
-                                int height = y + chunkWorldHeight;
-                                if (height <= maxHeight)
-                                {
-                                    blocks[xyzIndex] = SelectBlock(height, maxHeight, ref blockIDs);
-                                }
-                                else
-                                    blocks[xyzIndex] = default;
-                            }
-                        }
+                        if (height <= maxHeight)
+                            blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);
+                        else
+                            blocks[i] = default;
+                    }
 
                     commandBuffer.RemoveComponent<GenerateChunk>(entityInQueryIndex, e);
                     commandBuffer.AddComponent<GenerateMesh>(entityInQueryIndex, e);

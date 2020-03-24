@@ -95,34 +95,55 @@ namespace BlockGame.BlockWorld
 					var indices = indicesBuffer.Reinterpret<int>();
 					var uvs = uvBuffer.Reinterpret<float2>();
 
-					for (int x = 0; x < Constants.ChunkSizeX; ++x)
+					for( int i = 0; i < blocks.Length; ++i )
 					{
-						for (int y = 0; y < Constants.ChunkSizeY; ++y)
+						var curr = blocks[i];
+						if (curr == 0)
+							continue;
+
+						int3 xyz = GridUtil.Grid3D.IndexToPos(i);
+
+						for( int dirIndex = 0; dirIndex < GridUtil.Grid3D.Directions.Length; ++dirIndex )
 						{
-							for (int z = 0; z < Constants.ChunkSizeZ; ++z)
+							var dir = GridUtil.Grid3D.Directions[dirIndex];
+							var adj = GetBlockType(xyz + dir, blocks);
+
+							if(!IsOpaque(adj))
 							{
-								int3 p = new int3(x, y, z);
-								int posIndex = GridUtil.Grid3D.PosToIndex(p);
-
-								var curr = blocks[posIndex];
-								if (curr.blockType == 0)
-									continue;
-
-								for (int dirIndex = 0; dirIndex < GridUtil.Grid3D.Directions.Length; ++dirIndex)
-								{
-									var dir = GridUtil.Grid3D.Directions[dirIndex];
-									var adj = GetBlockType(p + dir, blocks);
-
-									if( !IsOpaque(adj))
-									{
-										ref var faceUVs = ref blockUVMap.GetUVs(curr.blockType, dirIndex);
-
-										BuildFace(p, dir, verts, indices, uvs, ref faceUVs);
-									}
-								}
+								ref var faceUVs = ref blockUVMap.GetUVs(curr, dirIndex);
+								BuildFace(xyz, dir, verts, indices, uvs, ref faceUVs);
 							}
 						}
 					}
+
+					//for (int x = 0; x < Constants.ChunkSizeX; ++x)
+					//{
+					//	for (int y = 0; y < Constants.ChunkSizeY; ++y)
+					//	{
+					//		for (int z = 0; z < Constants.ChunkSizeZ; ++z)
+					//		{
+					//			int3 p = new int3(x, y, z);
+					//			int posIndex = GridUtil.Grid3D.PosToIndex(p);
+
+					//			var curr = blocks[posIndex];
+					//			if (curr.blockType == 0)
+					//				continue;
+
+					//			for (int dirIndex = 0; dirIndex < GridUtil.Grid3D.Directions.Length; ++dirIndex)
+					//			{
+					//				var dir = GridUtil.Grid3D.Directions[dirIndex];
+					//				var adj = GetBlockType(p + dir, blocks);
+
+					//				if( !IsOpaque(adj))
+					//				{
+					//					ref var faceUVs = ref blockUVMap.GetUVs(curr.blockType, dirIndex);
+
+					//					BuildFace(p, dir, verts, indices, uvs, ref faceUVs);
+					//				}
+					//			}
+					//		}
+					//	}
+					//}
 				}).ScheduleParallel();
 
 			ApplyMeshData();
