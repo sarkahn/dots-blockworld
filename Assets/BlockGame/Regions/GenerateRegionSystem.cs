@@ -110,6 +110,7 @@ namespace BlockGame.BlockWorld
                 .WithStoreEntityQueryInField(ref _regionQuery)
                 .WithAll<GenerateRegionChunks>()
                 .ForEach((Entity e, int entityInQueryIndex,
+                ref DynamicBuffer<LinkedEntityGroup> linkedGroup,
                 in RegionHeightMap heightMap, in RegionIndex regionIndex
                 ) =>
                 {
@@ -136,11 +137,16 @@ namespace BlockGame.BlockWorld
                         commandBuffer.AddComponent<RegionIndex>(entityInQueryIndex, chunkEntity, regionIndex);
                         commandBuffer.AddComponent<GameChunk>(entityInQueryIndex, chunkEntity);
                         commandBuffer.AddComponent<GenerateChunk>(entityInQueryIndex, chunkEntity);
-                        commandBuffer.AddComponent<Disabled>(entityInQueryIndex, chunkEntity);
-                        commandBuffer.AddComponent<LinkToEntity>(entityInQueryIndex, chunkEntity, new LinkToEntity
-                        {
-                            target = e
-                        });
+                        //commandBuffer.AddComponent<Disabled>(entityInQueryIndex, chunkEntity);
+
+                        var playbackBuffer = commandBuffer.SetBuffer<LinkedEntityGroup>(entityInQueryIndex, e);
+                        if( linkedGroup.Length > 0 )
+                            playbackBuffer.AddRange(linkedGroup.AsNativeArray());
+                        playbackBuffer.Add(chunkEntity);
+                        //commandBuffer.AddComponent<LinkToEntity>(entityInQueryIndex, chunkEntity, new LinkToEntity
+                        //{
+                        //    target = e
+                        //});
                     }
 
                     commandBuffer.RemoveComponent<GenerateRegionChunks>(entityInQueryIndex, e);
