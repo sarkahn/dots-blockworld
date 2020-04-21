@@ -7,7 +7,7 @@ namespace BlockGame.BlockWorld
 {
 	public struct RegionHeightMap : IComponentData
 	{
-		public BlobAssetReference<HeightMap> heightMapBlob;
+		public BlobAssetReference<HeightMapBlob> heightMapBlob;
 
 		public ref BlobArray<int> Array => ref heightMapBlob.Value.values;
 	} 

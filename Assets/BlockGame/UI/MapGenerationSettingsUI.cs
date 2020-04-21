@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Unity.Entities;
+﻿using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,8 +21,8 @@ namespace BlockGame.BlockWorld
         [SerializeField]
         Slider _rangeSlider = default;
 
-        GenerateRegionHeightMapSettings _settings = GenerateRegionHeightMapSettings.Default;
-        public GenerateRegionHeightMapSettings Settings => _settings;
+        GenerateHeightmapSettings _settings = GenerateHeightmapSettings.Default;
+        public GenerateHeightmapSettings Settings => _settings;
 
         public int _range = 15;
 
@@ -46,11 +44,11 @@ namespace BlockGame.BlockWorld
                 },
                 new EntityQueryDesc
                 {
-                    All = new ComponentType[] { typeof(ChunkBlockType) },
+                    All = new ComponentType[] { typeof(ChunkBlockBuffer) },
                 },
                 new EntityQueryDesc
                 {
-                    All = new ComponentType[] { typeof(ChunkBlockType), typeof(Disabled) },
+                    All = new ComponentType[] { typeof(ChunkBlockBuffer), typeof(Disabled) },
                 });
 
             _iterationsSlider.onValueChanged.AddListener((f) =>
@@ -87,6 +85,7 @@ namespace BlockGame.BlockWorld
                 _range = (int)f;
             });
 
+            _settings = FindObjectOfType<RegionLoaderAuthoring>()._heightMapSettings;
         }
 
         private void Update()

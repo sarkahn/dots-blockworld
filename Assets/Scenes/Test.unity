@@ -2936,12 +2936,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d495d88b6ce3fa4f8ad510626c47f61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _range: 28
+  _range: 5
   _heightMapSettings:
-    iterations: 8
-    maxHeight: 25
+    iterations: 16
+    maxHeight: 15
     minHeight: 0
-    scale: 0.0001
+    scale: 0.01
     persistence: 0.5
 --- !u!114 &1003612493
 MonoBehaviour:
@@ -3353,7 +3353,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1132838567

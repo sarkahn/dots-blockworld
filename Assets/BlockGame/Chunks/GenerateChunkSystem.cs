@@ -1,24 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Rendering;
-using Unity.Collections;
-using Unity.Profiling;
+
+using BlockGame.BlockWorld.ChunkMesh;
 
 namespace BlockGame.BlockWorld
 {
     public class GenerateChunkSystem : SystemBase
     {
         EndSimulationEntityCommandBufferSystem _barrier;
+        EntityQuery _generatingChunks;
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
             _barrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+            _generatingChunks = GetEntityQuery(
+                ComponentType.ReadOnly<GenerateChunk>()
+                );
         }
 
         struct BlockIDs
@@ -40,22 +39,19 @@ namespace BlockGame.BlockWorld
             return ids;
         }
 
-        static ChunkBlockType SelectBlock(int height, int maxHeight, ref BlockIDs ids)
+        static ChunkBlockBuffer SelectBlock(int height, int maxHeight, ref BlockIDs ids)
         {
-            ChunkBlockType block = default;
+            ChunkBlockBuffer block = default;
 
             int sandHeight = 4;
             int dirtHeight = 7;
             int grassHeight = 10;
-            int stonHeight = int.MaxValue;
+            int stoneHeight = int.MaxValue;
 
-            // Sand
             if (height <= sandHeight)
                 block = ids.sand;
-            // Dirt
             else if (height <= dirtHeight )
                 block = ids.dirt;
-            // Grass
             else if (height <= grassHeight )
             {
                 if (height == maxHeight)
@@ -63,8 +59,7 @@ namespace BlockGame.BlockWorld
                 else
                     block = ids.dirt;
             }
-            // Stone
-            else if (height < stonHeight )
+            else if (height < stoneHeight )
                 block = ids.stone;
 
             return block;
@@ -77,20 +72,22 @@ namespace BlockGame.BlockWorld
             Entities
                 .WithName("AddBlockBuffersToChunks")
                 .WithAll<GenerateChunk>()
-                .WithNone<ChunkBlockType>()
+                .WithNone<ChunkBlockBuffer>()
                 .ForEach((int entityInQueryIndex, Entity e) =>
                 {
-                    commandBuffer.AddBuffer<ChunkBlockType>(entityInQueryIndex, e);
+                    commandBuffer.AddBuffer<ChunkBlockBuffer>(entityInQueryIndex, e);
                 }).ScheduleParallel();
 
             var blockIDs = GetBlockIDs();
 
-            ProfilerMarker marker = new ProfilerMarker("InitChunkBlocks");
+            var hmFromEntity = GetBufferFromEntity<HeightMapBuffer>(true);
+
             Entities
                 .WithName("InitializeChunkBlocks")
                 .WithAll<GenerateChunk>()
-                .ForEach((int entityInQueryIndex, Entity e, ref DynamicBuffer<ChunkBlockType> blocksBuffer, 
-                in ChunkWorldHeight chunkWorldHeight, in RegionHeightMap heightMapBlob, in RegionIndex regionIndex) =>
+                .ForEach((int entityInQueryIndex, Entity e, ref DynamicBuffer<ChunkBlockBuffer> blocksBuffer, 
+                in ChunkWorldHeight chunkWorldHeight, in RegionHeightMap heightMapBlob, in ChunkIndex chunkIndex,
+                in GameChunk chunk) =>
                 {
                     blocksBuffer.ResizeUninitialized(Constants.ChunkVolume);
 
@@ -119,6 +116,7 @@ namespace BlockGame.BlockWorld
                     commandBuffer.RemoveComponent<GenerateChunk>(entityInQueryIndex, e);
                     commandBuffer.AddComponent<GenerateMesh>(entityInQueryIndex, e);
                 }).ScheduleParallel();
+
 
             _barrier.AddJobHandleForProducer(Dependency);
         }
