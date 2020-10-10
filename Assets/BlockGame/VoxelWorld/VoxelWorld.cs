@@ -9,6 +9,8 @@ using BlockGame.CollectionExtensions;
 using System.Runtime.InteropServices;
 using BlockGame.Regions;
 
+using static GridUtil.Grid3D;
+
 namespace BlockGame.VoxelWorld
 {
     public partial class VoxelWorldSystem : SystemBase
@@ -68,6 +70,16 @@ namespace BlockGame.VoxelWorld
             {
                 return GetOrCreateBlocksArrayFromIndex(new int3(x, y, z));
             }
+
+            public AdjacentChunkBlocks GetAdjacentChunkBlocks(int3 chunkIndex)
+            {
+                return new AdjacentChunkBlocks(_accessor, chunkIndex);
+            }
+
+            public AdjacentChunkBlocks GetAdjacentChunkBlocks(int x, int y, int z)
+            {
+                return GetAdjacentChunkBlocks(new int3(x, y, z));
+            }
             #endregion
 
             #region CHUNKS
@@ -82,25 +94,23 @@ namespace BlockGame.VoxelWorld
                     chunkStack.Add(default);
                 }
 
-                Entity chunkEntity = chunkStack[stackIndex];
-                if (chunkEntity == Entity.Null)
+                Entity chunkEntity = _chunkPool.PopLast();
+                _ecb.RemoveComponent<Disabled>(chunkEntity);
+
+                chunkStack[stackIndex] = chunkEntity;
+
+                var chunkFromEntity = _accessor.ChunkFromEntity;
+                var chunk = chunkFromEntity[chunkEntity];
                 {
-                    chunkEntity = _chunkPool.PopLast();
-                    _ecb.RemoveComponent<Disabled>(chunkEntity);
-
-                    chunkStack[stackIndex] = chunkEntity;
-
-                    var chunkFromEntity = _accessor.ChunkFromEntity;
-                    var chunk = chunkFromEntity[chunkEntity];
-                    {
-                        chunk.Index = chunkIndex;
-                        chunk.Region = region;
-                    }
-                    chunkFromEntity[chunkEntity] = chunk;
-
-                    var linkedGroup = _accessor.LinkedGroupFromEntity[region];
-                    linkedGroup.Add(chunkEntity);
+                    chunk.Index = chunkIndex;
+                    chunk.Region = region;
                 }
+                chunkFromEntity[chunkEntity] = chunk;
+
+                var linkedGroup = _accessor.LinkedGroupFromEntity[region];
+                linkedGroup.Add(chunkEntity);
+
+                _accessor.ChunkMap[chunkIndex] = chunkEntity;
 
                 return chunkEntity;
             }
@@ -146,9 +156,21 @@ namespace BlockGame.VoxelWorld
 
                 return region;
             }
+
+            public bool TryGetRegionFromIndex(int2 regionIndex, out Entity region)
+            {
+                return TryGetRegionFromIndexInternal(_accessor, regionIndex, out region);
+            }
+
             public Entity GetOrCreateRegionFromIndex(int x, int y)
             {
                 return GetOrCreateRegionFromIndex(new int2(x, y));
+            }
+
+
+            public bool TryGetRegionFromIndex(int x, int y, out Entity region)
+            {
+                return TryGetRegionFromIndexInternal(_accessor, new int2(x, y), out region);
             }
             #endregion;
 
@@ -197,6 +219,11 @@ namespace BlockGame.VoxelWorld
             public bool TryGetVoxelChunkFromIndex(int3 chunkIndex, out Entity chunkEntity)
             {
                 return TryGetVoxelChunkFromIndexInternal(_accessor, chunkIndex, out chunkEntity);
+            }
+
+            public AdjacentChunkBlocks GetAdjacentChunkBlocks(int3 pos)
+            {
+                return new AdjacentChunkBlocks(_accessor, pos);
             }
         }
 
@@ -248,20 +275,7 @@ namespace BlockGame.VoxelWorld
             int3 chunkIndex, 
             out Entity chunkEntity)
         {
-            chunkEntity = Entity.Null;
-
-            if (!TryGetRegionFromIndexInternal(accessor, chunkIndex.xz, out Entity region))
-                return false;
-
-            var chunkStack = accessor.ChunkStackFromEntity[region];
-            int stackIndex = chunkIndex.y;
-
-            if (chunkIndex.y >= chunkStack.Length)
-                return false;
-
-            chunkEntity = chunkStack[stackIndex];
-
-            return chunkEntity != Entity.Null;
+            return accessor.ChunkMap.TryGetValue(chunkIndex, out chunkEntity);
         }
 
         public struct VoxelWorldAccessor
@@ -274,10 +288,12 @@ namespace BlockGame.VoxelWorld
             public ComponentDataFromEntity<VoxelChunk> ChunkFromEntity;
 
             public NativeHashMap<int2, Entity> RegionMap;
+            public NativeHashMap<int3, Entity> ChunkMap;
 
             public VoxelWorldAccessor(VoxelWorldSystem system, bool readOnly = false)
             {
                 RegionMap = system._regionMap;
+                ChunkMap = system._chunkMap;
 
                 ChunkStackFromEntity = system.GetBufferFromEntity<VoxelChunkStack>(readOnly);
                 BlocksFromEntity = system.GetBufferFromEntity<VoxelChunkBlocks>(readOnly);
@@ -285,6 +301,60 @@ namespace BlockGame.VoxelWorld
 
                 ChunkFromEntity = system.GetComponentDataFromEntity<VoxelChunk>(readOnly);
                 RegionFromEntity = system.GetComponentDataFromEntity<Region>(readOnly);
+            }
+        }
+
+        /// <summary>
+        /// Provides random fast-ish access to adjacent blocks from a given chunk position.
+        /// Should be retrieved though <see cref="VoxelWorld.GetAdjacentChunkBlocks(int3)"/>
+        /// or <see cref="VoxelWorldReadOnly.GetAdjacentChunkBlocks(int3)"/>
+        /// </summary>
+        public struct AdjacentChunkBlocks
+        {
+            public NativeArray<ushort> Up;
+            public NativeArray<ushort> Down;
+            public NativeArray<ushort> West;
+            public NativeArray<ushort> East;
+            public NativeArray<ushort> North;
+            public NativeArray<ushort> South;
+
+            public int3 ChunkIndex { get; private set; }
+
+            public NativeArray<ushort> this[int i]
+            {
+                get
+                {
+                    switch(i)
+                    {
+                        case 0: return Up;
+                        case 1: return Down;
+                        case 2: return West;
+                        case 3: return East;
+                        case 4: return North;
+                        case 5: return South;
+                        default: return default;
+                    }
+                }
+            }
+
+            public AdjacentChunkBlocks(VoxelWorldAccessor world, int3 chunkIndex)
+            {
+                ChunkIndex = chunkIndex;
+
+                West = GetBlocks(world, chunkIndex + Grid3D.West);
+                East = GetBlocks(world, chunkIndex + Grid3D.East);
+                North = GetBlocks(world, chunkIndex + Grid3D.North);
+                South = GetBlocks(world, chunkIndex + Grid3D.South);
+                Up = GetBlocks(world, chunkIndex + Grid3D.Up);
+                Down = GetBlocks(world, chunkIndex + Grid3D.Down);
+            }
+
+            static NativeArray<ushort> GetBlocks(VoxelWorldAccessor world, int3 pos)
+            {
+                world.ChunkMap.TryGetValue(pos, out Entity chunk);
+                if (chunk == Entity.Null)
+                    return default;
+                return world.BlocksFromEntity[chunk].Reinterpret<ushort>().AsNativeArray();
             }
         }
     }

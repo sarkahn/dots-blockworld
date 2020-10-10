@@ -19,6 +19,7 @@ namespace BlockGame.VoxelWorld
     public partial class VoxelWorldSystem : SystemBase
     {
         NativeHashMap<int2, Entity> _regionMap;
+        NativeHashMap<int3, Entity> _chunkMap;
 
         EndSimulationEntityCommandBufferSystem _endSimBarrier;
 
@@ -43,6 +44,7 @@ namespace BlockGame.VoxelWorld
             _endSimBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
 
             _regionMap = new NativeHashMap<int2, Entity>(10000, Allocator.Persistent);
+            _chunkMap = new NativeHashMap<int3, Entity>(50000, Allocator.Persistent);
 
             _regionPool = new NativeList<Entity>(1000, Allocator.Persistent);
             _chunkPool = new NativeList<Entity>(5000, Allocator.Persistent);
@@ -58,6 +60,7 @@ namespace BlockGame.VoxelWorld
             _regionMap.Dispose(Dependency);
             _regionPool.Dispose(Dependency);
             _chunkPool.Dispose(Dependency);
+            _chunkMap.Dispose(Dependency);
         }
 
         protected override void OnUpdate()
