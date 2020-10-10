@@ -11,7 +11,7 @@ using Unity.Assertions;
 using Unity.Entities.Hybrid;
 using BlockGame.CollectionExtensions;
 
-namespace BlockGame.VoxelWorld
+namespace BlockGame.VoxelWorldNS
 {
 
     [AlwaysUpdateSystem]

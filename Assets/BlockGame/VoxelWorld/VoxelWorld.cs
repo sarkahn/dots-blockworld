@@ -8,10 +8,9 @@ using GridUtil;
 using BlockGame.CollectionExtensions;
 using System.Runtime.InteropServices;
 using BlockGame.Regions;
+using System.CodeDom.Compiler;
 
-using static GridUtil.Grid3D;
-
-namespace BlockGame.VoxelWorld
+namespace BlockGame.VoxelWorldNS
 {
     public partial class VoxelWorldSystem : SystemBase
     {
@@ -127,6 +126,16 @@ namespace BlockGame.VoxelWorld
             public Entity GetOrCreateVoxelChunkFromIndex(int x, int y, int z)
             {
                 return GetOrCreateVoxelChunkFromIndex(new int3(x, y, z));
+            }
+
+            public bool TryGetVoxelChunkFromIndex(int3 chunkIndex, out Entity chunkEntity)
+            {
+                return TryGetVoxelChunkFromIndexInternal(_accessor, chunkIndex, out chunkEntity);
+            }
+
+            public bool TryGetVoxelChunkFromIndex(int x, int y, int z, out Entity chunkEntity)
+            {
+                return TryGetVoxelChunkFromIndexInternal(_accessor, new int3(x, y, z), out chunkEntity);
             }
             #endregion
 
@@ -351,9 +360,9 @@ namespace BlockGame.VoxelWorld
 
             static NativeArray<ushort> GetBlocks(VoxelWorldAccessor world, int3 pos)
             {
-                world.ChunkMap.TryGetValue(pos, out Entity chunk);
-                if (chunk == Entity.Null)
+                if(!world.ChunkMap.TryGetValue(pos, out Entity chunk))
                     return default;
+
                 return world.BlocksFromEntity[chunk].Reinterpret<ushort>().AsNativeArray();
             }
         }

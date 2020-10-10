@@ -39,8 +39,12 @@ namespace GridUtil
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 WorldToLocal(int3 worldPos) =>
-            mod(worldPos, CellSizeX);
+        public static int3 ToLocal(int3 pos)
+        {
+            // Only works if CellSize == 16
+            return pos & 15;
+            //return mod(pos, CellSizeX);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 WorldToCell(int3 worldPos)
@@ -51,8 +55,14 @@ namespace GridUtil
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WorldToIndex(int3 worldPos) =>
-            LocalToIndex(WorldToLocal(worldPos));
+            LocalToIndex(ToLocal(worldPos));
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool InCellBounds(int3 localPos)
+        {
+            return math.any(localPos < 0) || math.any(localPos >= CellSize);
+        }
 
         public static readonly int3 Up = new int3(0, 1, 0);
         public static readonly int3 Down = new int3(0, -1, 0);

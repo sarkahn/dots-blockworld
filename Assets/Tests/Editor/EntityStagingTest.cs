@@ -1,7 +1,7 @@
 
 using BlockGame.Chunks;
 using BlockGame.Regions;
-using BlockGame.VoxelWorld;
+using BlockGame.VoxelWorldNS;
 using NUnit.Framework;
 using Sark.EcsTesting;
 using Unity.Collections;

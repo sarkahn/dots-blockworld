@@ -10,16 +10,23 @@ namespace MathUtil
     public static class mathu
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int mod(int x, int period) =>
-        ((x % period) + period) % period;
+        public static int mod(int x, int period)
+        {
+            return ((x % period) + period) % period;
+        }
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2 mod(int2 xy, int2 period) =>
-            ((xy % period) + period) % period;
+        public static int2 mod(int2 xy, int2 period)
+        {
+            return ((xy % period) + period) % period;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 mod(int3 xyz, int3 period) =>
-            ((xyz % period) + period) % period;
+        public static int3 mod(int3 xyz, int3 period)
+        {
+            return ((xyz % period) + period) % period;
+        }
 
 
 

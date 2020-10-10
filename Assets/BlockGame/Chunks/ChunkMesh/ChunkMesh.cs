@@ -5,15 +5,17 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-struct ChunkMeshVerts : IBufferElementData
+[InternalBufferCapacity(0)]
+public struct ChunkMeshVerts : IBufferElementData
 {
-    public int3 Value;
-    public static implicit operator int3(ChunkMeshVerts b) => b.Value; 
-    public static implicit operator ChunkMeshVerts(int3 v) => 
+    public float3 Value;
+    public static implicit operator float3(ChunkMeshVerts b) => b.Value; 
+    public static implicit operator ChunkMeshVerts(float3 v) => 
         new ChunkMeshVerts { Value = v };
 }
 
-struct ChunkMeshIndices : IBufferElementData
+[InternalBufferCapacity(0)]
+public struct ChunkMeshIndices : IBufferElementData
 {
     public int Value;
     public static implicit operator int(ChunkMeshIndices b) => b.Value;
@@ -21,7 +23,8 @@ struct ChunkMeshIndices : IBufferElementData
         new ChunkMeshIndices { Value = v };
 }
 
-struct ChunkMeshUVs : IBufferElementData
+[InternalBufferCapacity(0)]
+public struct ChunkMeshUVs : IBufferElementData
 {
     public float2 Value;
     public static implicit operator float2(ChunkMeshUVs b) => b.Value;

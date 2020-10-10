@@ -11,7 +11,7 @@ using System;
 using Unity.Collections;
 using Unity.Mathematics;
 using System.Globalization;
-using BlockGame.VoxelWorld;
+using BlockGame.VoxelWorldNS;
 
 namespace BlockGame.VoxelWorldTests
 {

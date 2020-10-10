@@ -10,7 +10,7 @@ using GridUtil;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Assertions;
 
-namespace BlockGame.VoxelWorld
+namespace BlockGame.VoxelWorldNS
 {
     /// <summary>
     /// Stores a World for building entities inside a job.

@@ -1,6 +1,6 @@
 using BlockGame.Chunks;
 using BlockGame.Regions;
-using BlockGame.VoxelWorld;
+using BlockGame.VoxelWorldNS;
 using NUnit.Framework;
 using Sark.EcsTesting;
 using System.Collections;
@@ -119,6 +119,26 @@ namespace BlockGame.VoxelWorldTests
             adj = world.GetAdjacentChunkBlocks(0, 0, 0);
 
             Assert.IsTrue(adj.Up.IsCreated);
+        }
+
+        [Test]
+        public void ChunkMeshTest()
+        {
+            var world = VoxelWorld;
+
+            world.SetBlock(0, 0, 0, 1);
+            world.SetBlock(-1, 0, 0, 1);
+
+            world.TryGetVoxelChunkFromIndex(0, 0, 0, out Entity chunk1);
+            world.TryGetVoxelChunkFromIndex(-1, 0, 0, out Entity chunk2);
+
+            Assert.IsFalse(chunk1 == Entity.Null);
+            Assert.IsFalse(chunk2 == Entity.Null);
+
+            Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(chunk1));
+            Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(chunk2));
+
+            
         }
     }
 
