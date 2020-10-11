@@ -96,6 +96,7 @@ namespace BlockGame.VoxelWorldNS
     {
         public ExclusiveEntityTransaction Transaction { get; set; }
         public int Amount { get; set; }
+        public VoxelChunkBuilder Builder { get; set; }
 
         public void Execute()
         {

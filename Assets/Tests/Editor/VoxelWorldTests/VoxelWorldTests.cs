@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Entities.Conversion;
+using static Unity.Entities.GameObjectConversionUtility;
 
 namespace BlockGame.VoxelWorldTests
 {
@@ -137,8 +139,31 @@ namespace BlockGame.VoxelWorldTests
 
             Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(chunk1));
             Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(chunk2));
+        }
 
-            
+        [Test]
+        public void NewRegionsAreAddedToRegionMap()
+        {
+            var region = EntityManager.CreateEntity(typeof(Region));
+
+            World.Update();
+
+            var world = System.GetVoxelWorld();
+
+            bool found = world.TryGetRegionFromIndex(0, 0, out Entity e);
+
+            Assert.IsTrue(found);
+            Assert.AreEqual(region, e);
+
+            var region2 = EntityManager.CreateEntity(typeof(Region));
+            EntityManager.SetComponentData(region2, new Region { Index = new int2(10, 10) });
+
+            World.Update();
+
+            found = world.TryGetRegionFromIndex(10, 10, out e);
+
+            Assert.IsTrue(found);
+            Assert.AreEqual(e, region2);
         }
     }
 

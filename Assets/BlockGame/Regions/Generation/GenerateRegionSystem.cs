@@ -48,6 +48,7 @@ namespace BlockGame.Regions
 
             var genSettings = _genSettings.Settings;
             var chunkArchetype = _chunkArchetype;
+            var chunkBuilder = new VoxelChunkBuilder(this);
 
             Entities
                 .WithName("GenerateHeightMap")
@@ -79,22 +80,7 @@ namespace BlockGame.Regions
                     {
                         int3 chunkIndex = new int3(regionIndex.x, chunkIndexY, regionIndex.y);
 
-                        var chunk = ecb.CreateEntity(entityInQueryIndex, chunkArchetype);
-
-                        var blocks = ecb.SetBuffer<VoxelChunkBlocks>(entityInQueryIndex, chunk);
-                        blocks.ResizeUninitialized(Grid3D.CellVolume);
-                        unsafe
-                        {
-                            UnsafeUtility.MemClear(blocks.GetUnsafePtr(), blocks.Length);
-                        }
-
-                        ecb.SetComponent(entityInQueryIndex, chunk, new VoxelChunk
-                        {
-                            Index = chunkIndex,
-                            Region = e
-                        });
-                        ecb.AppendToBuffer<LinkedEntityGroup>(entityInQueryIndex, e, chunk);
-                        ecb.AppendToBuffer<VoxelChunkStack>(entityInQueryIndex, e, chunk);
+                        chunkBuilder.CreateVoxelChunk(ecb, entityInQueryIndex, chunkIndex, e);
                     }
                 }).ScheduleParallel();
 

@@ -4,15 +4,16 @@ using Unity.Collections;
 using BlockGame.Regions;
 using Unity.Mathematics;
 using Unity.Jobs;
-using GridUtil;
 using Unity.Collections.LowLevel.Unsafe;
 using System.Threading.Tasks;
 using Unity.Assertions;
 using Unity.Entities.Hybrid;
 using BlockGame.CollectionExtensions;
+using System;
 
 namespace BlockGame.VoxelWorldNS
 {
+
 
     [AlwaysUpdateSystem]
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]
@@ -28,6 +29,9 @@ namespace BlockGame.VoxelWorldNS
 
         EntityStagingHelper _regionBuilder;
         EntityStagingHelper _chunkBuilder;
+
+        EntityQuery _destroyedChunks;
+        EntityQuery _destroyedRegions;
 
         public int MinimumPoolSize { get; set; }
 
@@ -52,7 +56,7 @@ namespace BlockGame.VoxelWorldNS
             _chunkBuilder = new EntityStagingHelper("ChunkBuilder");
             _regionBuilder = new EntityStagingHelper("RegionBuilder");
 
-            MinimumPoolSize = 100;
+            MinimumPoolSize = 10;
         }
 
         protected override void OnDestroy()
@@ -66,6 +70,54 @@ namespace BlockGame.VoxelWorldNS
         protected override void OnUpdate()
         {
             SetupPools();
+
+            var regionMap = _regionMap;
+            var chunkMap = _chunkMap;
+            var regionsBuffer = _endSimBarrier.CreateCommandBuffer().AsParallelWriter();
+            var chunksBuffer = _endSimBarrier.CreateCommandBuffer().AsParallelWriter();
+
+            var mapRegions = Entities
+                .WithNone<MappedRegion>()
+                .ForEach((int entityInQueryIndex, Entity e, in Region region) =>
+                {
+                    regionMap[region.Index] = e;
+                    regionsBuffer.AddComponent(entityInQueryIndex, e, 
+                        new MappedRegion { Index = region.Index });
+                }).Schedule(Dependency);
+
+
+            var mapChunks = Entities.WithStoreEntityQueryInField(ref _destroyedChunks)
+                .WithNone<MappedRegion>()
+                .ForEach((int entityInQueryIndex, Entity e, in VoxelChunk chunk) =>
+                {
+                    chunkMap[chunk.Index] = e;
+                    chunksBuffer.AddComponent(entityInQueryIndex, e, 
+                        new MappedChunk { Index = chunk.Index });
+                }).Schedule(Dependency);
+
+            Dependency = JobHandle.CombineDependencies(mapRegions, mapChunks);
+
+            var clearRegions = Entities
+                .WithStoreEntityQueryInField(ref _destroyedRegions)
+                .WithNone<Region>()
+                .ForEach((in MappedRegion mapped) =>
+                {
+                    regionMap.Remove(mapped.Index);
+                }).Schedule(Dependency);
+
+            var clearChunks = Entities
+                .WithStoreEntityQueryInField(ref _destroyedChunks)
+                .WithNone<VoxelChunk>()
+                .ForEach((in MappedChunk mapped) =>
+                {
+                    chunkMap.Remove(mapped.Index);
+                }).Schedule(Dependency);
+
+            Dependency = JobHandle.CombineDependencies(clearChunks, clearRegions);
+
+            var ecb = _endSimBarrier.CreateCommandBuffer();
+            ecb.RemoveComponent<MappedRegion>(_destroyedRegions);
+            ecb.RemoveComponent<MappedChunk>(_destroyedChunks);
 
             _endSimBarrier.AddJobHandleForProducer(Dependency);
         }
@@ -120,6 +172,11 @@ namespace BlockGame.VoxelWorldNS
 
         public VoxelWorld GetVoxelWorld()
         {
+            if(MinimumPoolSize == 0 && (_chunkPool.Length == 0 || _regionPool.Length == 0))
+            {
+                throw new InvalidOperationException("Error initializing voxel world - minimum pool size is not set");
+            }
+
             SetupPoolsNow();
 
             Assert.IsTrue(_chunkPool.Length >= MinimumPoolSize);
@@ -136,5 +193,14 @@ namespace BlockGame.VoxelWorldNS
             return new VoxelWorldReadOnly(this);
         }
 
+        struct MappedRegion : ISystemStateComponentData
+        {
+            public int2 Index;
+        }
+
+        struct MappedChunk : ISystemStateComponentData
+        {
+            public int3 Index;
+        }
     }
 }

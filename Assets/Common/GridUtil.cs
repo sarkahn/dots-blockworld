@@ -47,15 +47,29 @@ namespace GridUtil
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 WorldToCell(int3 worldPos)
+        public static int3 WorldToCell(float3 worldPos)
         {
-            float3 world = worldPos;
-            return (int3)(math.floor(world / CellSize));
+            return (int3)(math.floor(worldPos / CellSize));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WorldToIndex(int3 worldPos) =>
-            LocalToIndex(ToLocal(worldPos));
+        public static int3 WorldToCell(int3 worldPos)
+        {
+            return WorldToCell((float3)worldPos);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WorldToIndex(int3 worldPos)
+        {
+            return LocalToIndex(ToLocal(worldPos));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WorldToIndex(float3 worldPos)
+        {
+            int3 floored = (int3)math.floor(worldPos);
+            return LocalToIndex(ToLocal(floored));
+        }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,6 +114,19 @@ namespace GridUtil
     {
         public const int CellSizeX = 16;
         public const int CellSizeZ = 16;
+        static public int2 CellSize = new int2( CellSizeX, CellSizeZ );
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 WorldToCell(int2 worldPos)
+        {
+            return WorldToCell((float2)worldPos);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 WorldToCell(float2 worldPos)
+        {
+            return (int2)(math.floor(worldPos / CellSize));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int PosToIndex(int x, int z) => z * CellSizeX + x;
