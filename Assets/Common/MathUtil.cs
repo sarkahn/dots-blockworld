@@ -1,13 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
-using UnityEngine;
 
 
-namespace MathUtil
+namespace Sark.Common
 {
-    public static class mathu
+    public static class MathUtil
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int mod(int x, int period)
