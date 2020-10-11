@@ -1,16 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using GridUtil;
 
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using BlockGame.Chunks;
-using System.Globalization;
-using Unity.Collections.LowLevel.Unsafe;
+using BlockGame.VoxelWorldNS;
 
 namespace BlockGame.Regions
 {
@@ -18,8 +14,6 @@ namespace BlockGame.Regions
     {
         EndSimulationEntityCommandBufferSystem _endSimBarrier;
         EntityQuery _regionsToGenerate;
-
-        EntityArchetype _chunkArchetype;
 
         MapGenSettingsAsset _genSettings;
 
@@ -29,11 +23,6 @@ namespace BlockGame.Regions
                 ComponentType.ReadOnly<Region>(),
                 ComponentType.ReadOnly<GenerateRegion>(),
                 ComponentType.Exclude<HeightMap>()
-                );
-
-            _chunkArchetype = EntityManager.CreateArchetype(
-                typeof(VoxelChunk),
-                typeof(VoxelChunkBlocks)
                 );
 
             _endSimBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
@@ -47,8 +36,8 @@ namespace BlockGame.Regions
             int chunkSize = 16;
 
             var genSettings = _genSettings.Settings;
-            var chunkArchetype = _chunkArchetype;
             var chunkBuilder = new VoxelChunkBuilder(this);
+            var chunkPrefab = World.GetOrCreateSystem<VoxelWorldSystem>().GetVoxelChunkPrefab();
 
             Entities
                 .WithName("GenerateHeightMap")
@@ -80,7 +69,7 @@ namespace BlockGame.Regions
                     {
                         int3 chunkIndex = new int3(regionIndex.x, chunkIndexY, regionIndex.y);
 
-                        chunkBuilder.CreateVoxelChunk(ecb, entityInQueryIndex, chunkIndex, e);
+                        VoxelWorldUtil.AddChunkToRegion(ecb, entityInQueryIndex, chunkIndex, chunkPrefab, e);
                     }
                 }).ScheduleParallel();
 

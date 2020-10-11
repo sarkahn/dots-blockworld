@@ -1,4 +1,5 @@
 ﻿using BlockGame.Chunks;
+using BlockGame.VoxelWorldNS;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,7 +24,6 @@ namespace BlockGame.Regions
         int _chunkSize = 16;
 
         EntityQuery _regionLoaderQuery;
-        EntityArchetype _loadRegionArchetype;
 
         protected override void OnCreate()
         {
@@ -35,13 +35,6 @@ namespace BlockGame.Regions
 
             _loadedRegions = new NativeList<Entity>(500, Allocator.Persistent);
             _toLoadPoints = new NativeList<int2>(500, Allocator.Persistent);
-
-            _loadRegionArchetype = EntityManager.CreateArchetype(
-               typeof(Region), 
-               typeof(LoadRegion),
-               typeof(VoxelChunkStack),
-               typeof(LinkedEntityGroup)
-               );
 
             RequireForUpdate(_regionLoaderQuery);
         }
@@ -68,8 +61,9 @@ namespace BlockGame.Regions
             var pointSet = _pointSet;
             var loadedRegions = _loadedRegions;
             var pointsToLoad = _toLoadPoints;
-            var loadRegionArchetype = _loadRegionArchetype;
             var ecb = _endSimSystem.CreateCommandBuffer();
+
+            var regionPrefab = World.GetOrCreateSystem<VoxelWorldSystem>().GetRegionPrefab();
 
             Job.WithCode(() =>
             {
@@ -143,16 +137,18 @@ namespace BlockGame.Regions
 
                 // Whatever remains in the pointset needs to be loaded
                 var toLoad = pointSet.ToNativeArray(Allocator.Temp);
-                    for (int i = 0; i < toLoad.Length; ++i)
-                    {
-                        var regionIndex = toLoad[i];
-                        float3 worldPos = new float3();
-                        worldPos.xz = regionIndex * chunkSize;
 
-                        var region = ecb.CreateEntity(loadRegionArchetype);
-                        ecb.SetComponent(region,
-                            new Region { Index = regionIndex });
-                    }
+                for (int i = 0; i < toLoad.Length; ++i)
+                {
+                    var regionIndex = toLoad[i];
+                    float3 worldPos = new float3();
+                    worldPos.xz = regionIndex * chunkSize;
+
+                    var region = ecb.Instantiate(regionPrefab);
+                    ecb.SetComponent(region,
+                        new Region { Index = regionIndex });
+                    ecb.AddComponent<LoadRegion>(region);
+                }
             }).Schedule();
 
             _endSimSystem.AddJobHandleForProducer(Dependency);

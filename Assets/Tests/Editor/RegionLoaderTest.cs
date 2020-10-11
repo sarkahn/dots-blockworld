@@ -94,17 +94,10 @@ namespace BlockGame.RegionLoaderTests
             var q = GetEntityQuery(typeof(Region));
             var region = q.GetSingletonEntity();
 
-            Assert.IsTrue(EntityManager.HasComponent<Translation>(region));
-
-            var regionPos = EntityManager.GetComponentData<Translation>(region).Value;
             var regionIndex = EntityManager.GetComponentData<Region>(region).Index;
 
             int2 expectedRegionIndex = (int2)(math.floor(pos.xz / _chunkSize));
-            float3 expectedRegionPos = 0;
-            expectedRegionPos.xz = expectedRegionIndex * _chunkSize;
-
             Assert.AreEqual(expectedRegionIndex, regionIndex);
-            Assert.That(expectedRegionPos, Is.EqualTo(regionPos).Within(0.005f));
         }
     }
 }

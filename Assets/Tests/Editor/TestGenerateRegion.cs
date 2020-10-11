@@ -16,7 +16,6 @@ public class TestGenerateRegion : WorldTestBase
         var archetype = EntityManager.CreateArchetype(
             typeof(Region),
             typeof(GenerateRegion),
-            typeof(VoxelChunkStack),
             typeof(LinkedEntityGroup));
         var region = EntityManager.CreateEntity(archetype);
         EntityManager.SetComponentData(region, new Region
@@ -26,15 +25,6 @@ public class TestGenerateRegion : WorldTestBase
         var buffer = EntityManager.GetBuffer<LinkedEntityGroup>(region);
         buffer.Add(region);
         return region;
-    }
-
-    [Test]
-    public void TestGenerateRegionSimplePasses()
-    {
-        var region = MakeRegion(0, 0);
-        World.Update();
-        var stack = EntityManager.GetBuffer<VoxelChunkStack>(region);
-        Assert.NotZero(stack.Length);
     }
 
 }

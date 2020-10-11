@@ -31,6 +31,7 @@ namespace BlockGame.Regions
             // TODO : Check if regions were previously loaded and restore from disk/memory
 
             ecb.AddComponent<GenerateRegion>(_regionsToLoad);
+            ecb.RemoveComponent<LoadRegion>(_regionsToLoad);
 
             //ecb.RemoveComponent<LoadRegion>(_regionsDoneGenerating);
             //ecb.RemoveComponent<GenerateRegion>(_regionsDoneGenerating);

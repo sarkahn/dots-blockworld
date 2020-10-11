@@ -36,7 +36,6 @@ namespace BlockGame.VoxelWorldTests
             var region = VoxelWorld.GetOrCreateRegionFromIndex(targetIndex);
 
             Assert.IsTrue(EntityManager.HasComponent<Region>(region));
-            Assert.IsTrue(EntityManager.HasComponent<VoxelChunkStack>(region));
             Assert.IsTrue(EntityManager.HasComponent<LinkedEntityGroup>(region));
 
             var linkedGroup = EntityManager.GetBuffer<LinkedEntityGroup>(region);
@@ -164,6 +163,20 @@ namespace BlockGame.VoxelWorldTests
 
             Assert.IsTrue(found);
             Assert.AreEqual(e, region2);
+        }
+
+        [Test]
+        public void PrefabTest()
+        {
+            var regionPrefab = System.GetRegionPrefab();
+            Assert.IsTrue(regionPrefab != Entity.Null);
+            Assert.IsTrue(EntityManager.HasComponent<Region>(regionPrefab));
+            Assert.IsTrue(EntityManager.HasComponent<Prefab>(regionPrefab));
+
+            var chunkPrefab = System.GetVoxelChunkPrefab();
+            Assert.IsTrue(chunkPrefab != Entity.Null);
+            Assert.IsTrue(EntityManager.HasComponent<VoxelChunk>(chunkPrefab));
+            Assert.IsTrue(EntityManager.HasComponent<Prefab>(chunkPrefab));
         }
     }
 

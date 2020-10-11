@@ -84,34 +84,7 @@ namespace BlockGame.VoxelWorldNS
             #region CHUNKS
             public Entity CreateVoxelChunkFromIndex(int3 chunkIndex, Entity region)
             {
-                var chunkStack = _accessor.ChunkStackFromEntity[region];
-                int stackIndex = chunkIndex.y;
-
-                // No VoxelChunk has been created at or above the given height
-                while (chunkIndex.y >= chunkStack.Length)
-                {
-                    chunkStack.Add(default);
-                }
-
-                Entity chunkEntity = _chunkPool.PopLast();
-                _ecb.RemoveComponent<Disabled>(chunkEntity);
-
-                chunkStack[stackIndex] = chunkEntity;
-
-                var chunkFromEntity = _accessor.ChunkFromEntity;
-                var chunk = chunkFromEntity[chunkEntity];
-                {
-                    chunk.Index = chunkIndex;
-                    chunk.Region = region;
-                }
-                chunkFromEntity[chunkEntity] = chunk;
-
-                var linkedGroup = _accessor.LinkedGroupFromEntity[region];
-                linkedGroup.Add(chunkEntity);
-
-                _accessor.ChunkMap[chunkIndex] = chunkEntity;
-
-                return chunkEntity;
+                return VoxelWorldUtil.AddChunkToRegion(_accessor, _ecb, _chunkPool, chunkIndex, region);
             }
 
             public Entity GetOrCreateVoxelChunkFromIndex(int3 chunkIndex)
@@ -289,7 +262,6 @@ namespace BlockGame.VoxelWorldNS
 
         public struct VoxelWorldAccessor
         {
-            public BufferFromEntity<VoxelChunkStack> ChunkStackFromEntity;
             public BufferFromEntity<VoxelChunkBlocks> BlocksFromEntity;
             public BufferFromEntity<LinkedEntityGroup> LinkedGroupFromEntity;
 
@@ -304,7 +276,6 @@ namespace BlockGame.VoxelWorldNS
                 RegionMap = system._regionMap;
                 ChunkMap = system._chunkMap;
 
-                ChunkStackFromEntity = system.GetBufferFromEntity<VoxelChunkStack>(readOnly);
                 BlocksFromEntity = system.GetBufferFromEntity<VoxelChunkBlocks>(readOnly);
                 LinkedGroupFromEntity = system.GetBufferFromEntity<LinkedEntityGroup>(readOnly);
 

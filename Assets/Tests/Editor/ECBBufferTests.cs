@@ -27,7 +27,7 @@ public class ECBBufferTests : WorldTestBase
             var archetype = EntityManager.CreateArchetype(typeof(VoxelChunkBlocks));
             var bfe = GetBufferFromEntity<VoxelChunkBlocks>(false);
 
-            Entities.ForEach((int entityInQueryIndex, Entity e, Translation t) =>
+            Entities.ForEach((int entityInQueryIndex, Entity e) =>
             {
                 var newEntity = ecb.CreateEntity(entityInQueryIndex, archetype);
 

@@ -3,6 +3,7 @@ using BlockGame.Chunks;
 using BlockGame.Regions;
 using BlockGame.VoxelWorldNS;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using Sark.EcsTesting;
 using Unity.Collections;
 using Unity.Entities;
@@ -21,7 +22,6 @@ namespace EntityStagingTests
 
             var regionArchetype = EntityManager.CreateArchetype(
                 typeof(Region),
-                typeof(VoxelChunkStack),
                 typeof(LinkedEntityGroup),
                 typeof(Disabled)
                 );
@@ -52,8 +52,12 @@ namespace EntityStagingTests
             var regionsQ = GetEntityQuery(typeof(Region), typeof(Disabled));
             var chunksQ = GetEntityQuery(typeof(VoxelChunk), typeof(Disabled));
 
-            var regionJob = regionBuilder.ScheduleCreateRegionsJob(100).StagingJob;
-            var chunkJob = chunksBuilder.ScheduleCreateChunksJob(100).StagingJob;
+            var prefabs = new WorldEntityPrefabLoader(EntityManager);
+
+            var regionJob = regionBuilder.ScheduleCreateRegionsJob(
+                100).StagingJob;
+            var chunkJob = chunksBuilder.ScheduleCreateChunksJob(
+                100).StagingJob;
 
             var parallelJob = JobHandle.CombineDependencies(regionJob, chunkJob);
 

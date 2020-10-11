@@ -28,9 +28,12 @@ namespace BlockGame.VoxelWorldNS
 
         public JobHandle StagingJob { get; private set; }
 
+        WorldEntityPrefabLoader _prefabLoader;
+
         public EntityStagingHelper(string name)
         {
             StagingWorld = new World($"{name} Staging World");
+            _prefabLoader = new WorldEntityPrefabLoader(StagingManager);
         }
 
         public NativeArray<Entity> Complete(World targetWorld)
@@ -45,15 +48,16 @@ namespace BlockGame.VoxelWorldNS
         public EntityStagingHelper ScheduleCreateRegionsJob(
             int amount,
             JobHandle inputDeps = default) =>
-            ScheduleCreateEntitiesJob<RegionBuilderJob>(amount, inputDeps);
+            ScheduleCreateEntitiesJob<RegionBuilderJob>(amount, _prefabLoader.RegionPrefab, inputDeps);
 
         public EntityStagingHelper ScheduleCreateChunksJob(
             int amount,
             JobHandle inputDeps = default) =>
-            ScheduleCreateEntitiesJob<ChunkBuilderJob>(amount, inputDeps);
+            ScheduleCreateEntitiesJob<ChunkBuilderJob>(amount, _prefabLoader.VoxelChunkPrefab, inputDeps);
 
         EntityStagingHelper ScheduleCreateEntitiesJob<T>(
             int amount,
+            Entity prefab,
             JobHandle inputDeps = default) where T : unmanaged, IEntityBuilderJob
         {
             Assert.IsFalse(IsRunning);
@@ -63,7 +67,8 @@ namespace BlockGame.VoxelWorldNS
             StagingJob = new T
             {
                 Amount = amount,
-                Transaction = tr
+                Transaction = tr,
+                Prefab = prefab
             }.Schedule(inputDeps);
 
             return this;
@@ -75,20 +80,18 @@ namespace BlockGame.VoxelWorldNS
         public ExclusiveEntityTransaction Transaction { get; set; }
         public int Amount { get; set; }
 
+        public Entity Prefab { get; set; }
+
         public void Execute()
         {
-            var arch = Transaction.CreateArchetype(
-                typeof(Region),
-                typeof(VoxelChunkStack),
-                typeof(LinkedEntityGroup),
-                typeof(Disabled));
             var arr = new NativeArray<Entity>(Amount, Allocator.Temp);
-            Transaction.CreateEntity(arch, arr);
+            Transaction.Instantiate(Prefab, arr);
             for (int i = 0; i < arr.Length; ++i)
             {
-                var buffer = Transaction.GetBuffer<LinkedEntityGroup>(arr[i]);
-                buffer.Add(arr[i]);
+                Transaction.AddComponent(arr[i], typeof(Disabled));
             }
+
+            Transaction.DestroyEntity(Prefab);
         }
     }
 
@@ -97,30 +100,24 @@ namespace BlockGame.VoxelWorldNS
         public ExclusiveEntityTransaction Transaction { get; set; }
         public int Amount { get; set; }
         public VoxelChunkBuilder Builder { get; set; }
+        public Entity Prefab { get; set; }
 
         public void Execute()
         {
-            var arch = Transaction.CreateArchetype(
-                typeof(VoxelChunk),
-                typeof(VoxelChunkBlocks),
-                typeof(Disabled)
-                );
             var arr = new NativeArray<Entity>(Amount, Allocator.Temp);
-            Transaction.CreateEntity(arch, arr);
+            Transaction.Instantiate(Prefab, arr);
             for (int i = 0; i < arr.Length; ++i)
             {
-                var blocks = Transaction.GetBuffer<VoxelChunkBlocks>(arr[i]);
-                blocks.ResizeUninitialized(Grid3D.CellVolume);
-                unsafe
-                {
-                    UnsafeUtility.MemClear(blocks.GetUnsafePtr(), blocks.Length);
-                }
+                Transaction.AddComponent(arr[i], typeof(Disabled));
             }
+
+            Transaction.DestroyEntity(Prefab);
         }
     }
     public interface IEntityBuilderJob : IJob
     {
         ExclusiveEntityTransaction Transaction { get; set; }
         int Amount { get; set; }
+        Entity Prefab { get; set; }
     }
 }

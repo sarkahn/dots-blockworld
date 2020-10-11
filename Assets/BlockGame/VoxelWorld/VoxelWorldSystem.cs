@@ -4,17 +4,11 @@ using Unity.Collections;
 using BlockGame.Regions;
 using Unity.Mathematics;
 using Unity.Jobs;
-using Unity.Collections.LowLevel.Unsafe;
-using System.Threading.Tasks;
 using Unity.Assertions;
-using Unity.Entities.Hybrid;
-using BlockGame.CollectionExtensions;
 using System;
 
 namespace BlockGame.VoxelWorldNS
 {
-
-
     [AlwaysUpdateSystem]
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]
     public partial class VoxelWorldSystem : SystemBase
@@ -32,6 +26,8 @@ namespace BlockGame.VoxelWorldNS
 
         EntityQuery _destroyedChunks;
         EntityQuery _destroyedRegions;
+
+        WorldEntityPrefabLoader _prefabLoader;
 
         public int MinimumPoolSize { get; set; }
 
@@ -56,7 +52,9 @@ namespace BlockGame.VoxelWorldNS
             _chunkBuilder = new EntityStagingHelper("ChunkBuilder");
             _regionBuilder = new EntityStagingHelper("RegionBuilder");
 
-            MinimumPoolSize = 10;
+            MinimumPoolSize = 100;
+
+            _prefabLoader = new WorldEntityPrefabLoader(EntityManager);
         }
 
         protected override void OnDestroy()
@@ -125,12 +123,16 @@ namespace BlockGame.VoxelWorldNS
         void SetupPools()
         {
             if (!_regionBuilder.IsRunning && _regionPool.Length < MinimumPoolSize)
+            {
                 _regionBuilder.ScheduleCreateRegionsJob(RegionPoolRefillAmount);
+            }
             else if (_regionBuilder.IsRunning && _regionBuilder.IsCompleted)
                 CompleteRegionBuilderJob();
 
             if (!_chunkBuilder.IsRunning && _chunkPool.Length < MinimumPoolSize)
+            {
                 _chunkBuilder.ScheduleCreateChunksJob(ChunkPoolRefillAmount);
+            }
             else if (_chunkBuilder.IsRunning && _chunkBuilder.IsCompleted)
                 CompleteChunkBuilderJob();
         }
@@ -162,7 +164,7 @@ namespace BlockGame.VoxelWorldNS
 
             if (_chunkBuilder.IsRunning)
                 CompleteChunkBuilderJob();
-            
+
             if(_chunkPool.Length < MinimumPoolSize)
             {
                 _chunkBuilder.ScheduleCreateChunksJob(ChunkPoolRefillAmount);
@@ -202,5 +204,9 @@ namespace BlockGame.VoxelWorldNS
         {
             public int3 Index;
         }
+
+        public Entity GetRegionPrefab() => _prefabLoader.RegionPrefab;
+        public Entity GetVoxelChunkPrefab() => _prefabLoader.VoxelChunkPrefab;
+
     }
 }
