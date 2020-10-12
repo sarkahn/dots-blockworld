@@ -1,9 +1,9 @@
-﻿using System.Diagnostics;
-using Unity.Collections;
+﻿using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 namespace Sark.BlockGame
 {
@@ -32,7 +32,7 @@ namespace Sark.BlockGame
             _pointSet = new NativeHashSet<int2>(500, Allocator.Persistent);
 
             _loadedRegions = new NativeList<Entity>(500, Allocator.Persistent);
-            _toLoadPoints = new NativeList<int2>(500, Allocator.Persistent);
+            _toLoadPoints = new NativeList<int2>(50000, Allocator.Persistent);
 
             RequireForUpdate(_regionLoaderQuery);
         }
@@ -139,6 +139,7 @@ namespace Sark.BlockGame
                 for (int i = 0; i < toLoad.Length; ++i)
                 {
                     var regionIndex = toLoad[i];
+
                     float3 worldPos = new float3();
                     worldPos.xz = regionIndex * chunkSize;
 
@@ -154,7 +155,7 @@ namespace Sark.BlockGame
 
         struct NamedInEditor : IComponentData { }
 
-        [Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
         void SetEditorNames()
         {
 #if UNITY_EDITOR

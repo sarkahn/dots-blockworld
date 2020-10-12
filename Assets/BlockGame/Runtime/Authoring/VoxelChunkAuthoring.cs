@@ -11,21 +11,39 @@ namespace Sark.BlockGame
 {
     public class VoxelChunkAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
+        public List<int4> blocksToSet = new List<int4>();
+
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
             int3 chunkIndex = Grid3D.WorldToCell(transform.position);
-            dstManager.AddComponentData<VoxelChunk>(entity, new VoxelChunk { Index = chunkIndex });
+            dstManager.AddComponentData(entity, new VoxelChunk { Index = chunkIndex });
 
             var blocks = dstManager.AddBuffer<VoxelChunkBlocks>(entity);
             blocks.ResizeUninitialized(Grid3D.CellVolume);
             unsafe
             {
-                UnsafeUtility.MemClear(blocks.GetUnsafePtr(), blocks.Length);
+                UnsafeUtility.MemClear(blocks.GetUnsafePtr(),  
+                    blocks.Length * UnsafeUtility.SizeOf<VoxelChunkBlocks>());
             }
 
             dstManager.AddBuffer<ChunkMeshVerts>(entity);
             dstManager.AddBuffer<ChunkMeshIndices>(entity);
             dstManager.AddBuffer<ChunkMeshUVs>(entity);
+
+            blocks = dstManager.GetBuffer<VoxelChunkBlocks>(entity);
+
+            if (blocksToSet.Count != 0)
+            {
+                foreach(var op in blocksToSet)
+                {
+                    int3 p = op.xyz;
+                    ushort block = (ushort)op.w;
+                    int i = Grid3D.LocalToIndex(p);
+                    blocks[i] = block;
+                }
+
+                dstManager.AddComponent<RebuildChunkMesh>(entity);
+            }
 
 #if UNITY_EDITOR
             dstManager.SetName(entity, $"Chunk {chunkIndex}");

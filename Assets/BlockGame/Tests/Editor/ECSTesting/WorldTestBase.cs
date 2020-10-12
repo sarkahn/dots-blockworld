@@ -30,7 +30,9 @@ namespace Sark.EcsTesting
 
         protected T AddSystem<T>() where T : SystemBase
         {
-            DefaultWorldInitialization. AddSystemsToRootLevelSystemGroups(World, new[] { typeof(T) });
+            DefaultWorldInitialization. AddSystemsToRootLevelSystemGroups(
+                World, 
+                typeof(T));
             return World.GetExistingSystem<T>();
         }
     }

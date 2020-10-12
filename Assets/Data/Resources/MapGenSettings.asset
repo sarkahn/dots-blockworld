@@ -15,6 +15,6 @@ MonoBehaviour:
   Settings:
     Iterations: 16
     Persistance: 0.5
-    Scale: 0.01
+    Scale: 0.02
     Low: 0
     High: 15

@@ -8,6 +8,6 @@ namespace Sark.BlockGame
     [Serializable]
     public struct HeightMap : IBufferElementData
     {
-        public ushort height;
+        public ushort Value;
     }
 }

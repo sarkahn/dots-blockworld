@@ -10,7 +10,8 @@ namespace Sark.BlockGame
 {
     public struct VoxelWorldWriter
     {
-        EntityCommandBuffer _ecb;
+        public EntityCommandBuffer ECB;
+
         NativeList<Entity> _regionPool;
         NativeList<Entity> _chunkPool;
 
@@ -19,7 +20,7 @@ namespace Sark.BlockGame
             NativeList<Entity> regionPool,
             NativeList<Entity> chunkPool)
         {
-            _ecb = ecb;
+            ECB = ecb;
             _regionPool = regionPool;
             _chunkPool = chunkPool;
         }
@@ -27,7 +28,7 @@ namespace Sark.BlockGame
         public Entity CreateRegionFromIndex(VoxelWorldState world, int2 regionIndex)
         {
             var entity = _regionPool.PopLast();
-            _ecb.RemoveComponent<Disabled>(entity);
+            ECB.RemoveComponent<Disabled>(entity);
 
             var regionFromEntity = world.RegionFromEntity;
             var region = regionFromEntity[entity];
@@ -43,7 +44,7 @@ namespace Sark.BlockGame
         public Entity CreateVoxelChunkFromIndex(VoxelWorldState world, int3 chunkIndex, Entity region)
         {
             Entity chunkEntity = _chunkPool.PopLast();
-            _ecb.RemoveComponent<Disabled>(chunkEntity);
+            ECB.RemoveComponent<Disabled>(chunkEntity);
 
             var chunkFromEntity = world.ChunkFromEntity;
             var chunk = chunkFromEntity[chunkEntity];

@@ -11,6 +11,7 @@ namespace Sark.BlockGame
         VoxelWorldReader _reader;
         VoxelWorldWriter _writer;
         VoxelWorldState _world;
+        EntityCommandBuffer ECB => _writer.ECB;
 
         public VoxelWorld(VoxelWorldWriter writer, VoxelWorldState world)
         {
@@ -22,7 +23,10 @@ namespace Sark.BlockGame
         public void SetBlock(int3 worldXYZ, ushort block)
         {
             var chunkIndex = Grid3D.WorldToCell(worldXYZ);
-            var blocks = GetOrCreateBlocksArrayFromIndex(chunkIndex);
+            var chunk = GetOrCreateVoxelChunkFromIndex(chunkIndex);
+            ECB.AddComponent<RebuildChunkMesh>(chunk);
+
+            var blocks = _world.BlocksFromEntity[chunk];
             int blockIndex = Grid3D.WorldToIndex(worldXYZ);
 
             blocks[blockIndex] = block;
@@ -55,6 +59,16 @@ namespace Sark.BlockGame
         public bool TryGetVoxelChunkFromIndex(int x, int y, int z, out Entity chunk)
         {
             return TryGetVoxelChunkFromIndex(new int3(x, y, z), out chunk);
+        }
+
+        public Entity GetVoxelChunkFromIndex(int3 chunkIndex)
+        {
+            TryGetVoxelChunkFromIndex(chunkIndex, out var chunk);
+            return chunk;
+        }
+        public Entity GetVoxelChunkFromIndex(int x, int y, int z)
+        {
+            return GetVoxelChunkFromIndex(new int3(x, y, z));
         }
 
         public NativeArray<ushort> GetOrCreateBlocksArrayFromIndex(int3 chunkIndex)

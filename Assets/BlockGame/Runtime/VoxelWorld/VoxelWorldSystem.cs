@@ -50,7 +50,7 @@ namespace Sark.BlockGame
             _chunkBuilder = new EntityStagingHelper("ChunkBuilder");
             _regionBuilder = new EntityStagingHelper("RegionBuilder");
 
-            MinimumPoolSize = 100;
+            MinimumPoolSize = 0;
 
             _prefabLoader = new WorldEntityPrefabLoader(EntityManager);
         }
@@ -80,7 +80,6 @@ namespace Sark.BlockGame
                     regionsBuffer.AddComponent(entityInQueryIndex, e, 
                         new MappedRegion { Index = region.Index });
                 }).Schedule(Dependency);
-
 
             var mapChunks = Entities.WithStoreEntityQueryInField(ref _destroyedChunks)
                 .WithNone<MappedRegion>()
@@ -170,6 +169,10 @@ namespace Sark.BlockGame
             }
         }
 
+        VoxelWorldState GetVoxelWorldState(SystemBase system, bool readOnly)
+        {
+            return new VoxelWorldState(system, _regionMap, _chunkMap, readOnly);
+        }
         VoxelWorldState GetVoxelWorldState(bool readOnly)
         {
             return new VoxelWorldState(this, _regionMap, _chunkMap, readOnly);
@@ -195,6 +198,11 @@ namespace Sark.BlockGame
 
             _endSimBarrier.AddJobHandleForProducer(Dependency);
             return voxelWorld;
+        }
+        public VoxelWorldReadOnly GetVoxelWorldReadOnly(SystemBase system)
+        {
+            var state = GetVoxelWorldState(true);
+            return new VoxelWorldReadOnly(state);
         }
 
         public VoxelWorldReadOnly GetVoxelWorldReadOnly()

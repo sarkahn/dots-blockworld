@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace Sark.BlockGame
 {
-    public struct RebuildChunkMeshData : IComponentData
-    {
-    }
-
     public struct RebuildChunkMesh : IComponentData
     {
 

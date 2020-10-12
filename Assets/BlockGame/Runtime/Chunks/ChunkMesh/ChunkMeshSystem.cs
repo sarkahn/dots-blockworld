@@ -11,27 +11,28 @@ using static Sark.Common.GridUtil;
 
 namespace Sark.BlockGame
 {
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class ChunkMeshSystem : SystemBase
     {
-        EndSimulationEntityCommandBufferSystem _endSimBarrier;
+        EndSimulationEntityCommandBufferSystem _barrier;
         EntityQuery _updateMeshQuery;
 
         protected override void OnCreate()
         {
-            _endSimBarrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+            _barrier = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         }
 
         protected override void OnUpdate()
         {
             var heightMapFromEntity = GetBufferFromEntity<HeightMap>(true);
             var voxelWorldSystem = World.GetOrCreateSystem<VoxelWorldSystem>();
-            var voxelWorld = voxelWorldSystem.GetVoxelWorldReadOnly();
+            var voxelWorld = voxelWorldSystem.GetVoxelWorldReadOnly(this);
 
             JobHandle voxelWorldDeps = voxelWorldSystem.GetOutputDependency();
             Dependency = JobHandle.CombineDependencies(Dependency, voxelWorldDeps);
 
             Entities
-                .WithAll<RebuildChunkMeshData>()
+                .WithAll<RebuildChunkMesh>()
                 .WithReadOnly(voxelWorld)
                 .WithStoreEntityQueryInField(ref _updateMeshQuery)
                 .ForEach((int entityInQueryIndex, Entity e,
@@ -43,6 +44,13 @@ namespace Sark.BlockGame
                 ) =>
             {
                 var blocks = blocksBuffer.Reinterpret<ushort>().AsNativeArray();
+                //voxelWorld.TryGetBlocksArrayFromIndex(chunk.Index, out var blocks);
+                int zeroCount = 0;
+                for (int i = 0; i < blocks.Length; ++i)
+                    if (blocks[i] != 0)
+                        ++zeroCount;
+
+                //Debug.Log($"FOUND {zeroCount} NONZERO BLOCKS");
 
                 verts.Clear();
                 indices.Clear();
@@ -64,25 +72,24 @@ namespace Sark.BlockGame
                         ushort adjBlock = GetAdjacentBlock(blocks, adj, xyz, dir, dirIndex);
                         if(adjBlock == 0)
                         {
-                            //BuildFace(xyz, dir, verts, indices, uvs);
+                            BuildFace(xyz, dir, ref verts, ref indices, ref uvs);
                         }
                     }
                 }
             }).ScheduleParallel();
 
-            var ecb = _endSimBarrier.CreateCommandBuffer();
-            ecb.RemoveComponent<RebuildChunkMeshData>(_updateMeshQuery);
-            ecb.AddComponent<RebuildChunkMesh>(_updateMeshQuery);
+            var ecb = _barrier.CreateCommandBuffer();
+            ecb.RemoveComponent<RebuildChunkMesh>(_updateMeshQuery);
 
-            _endSimBarrier.AddJobHandleForProducer(Dependency);
+            _barrier.AddJobHandleForProducer(Dependency);
         }
 
         public static void BuildFace(
             float3 xyz, 
             int3 dir, 
-            DynamicBuffer<float3> verts,
-            DynamicBuffer<int> indices,
-            DynamicBuffer<float2> uvs)
+            ref DynamicBuffer<ChunkMeshVerts> verts,
+            ref DynamicBuffer<ChunkMeshIndices> indices,
+            ref DynamicBuffer<ChunkMeshUVs> uvs)
         {
             float3 center = xyz + new float3(.5f);
             float3 normal = dir;

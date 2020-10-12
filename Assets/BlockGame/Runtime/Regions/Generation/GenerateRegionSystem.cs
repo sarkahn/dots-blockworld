@@ -38,42 +38,48 @@ namespace Sark.BlockGame
             int chunkSize = 16;
 
             var genSettings = _genSettings.Settings;
-            var chunkBuilder = new VoxelChunkBuilder(this);
             var chunkPrefab = World.GetOrCreateSystem<VoxelWorldSystem>().GetVoxelChunkPrefab();
 
             Entities
-                .WithName("GenerateHeightMap")
-                .WithNone<HeightMap>()
-                .WithAll<GenerateRegion>()
-                .ForEach((int entityInQueryIndex, Entity e, 
-                in Region region) =>
+            .WithName("GenerateHeightMap")
+            .WithNone<HeightMap>()
+            .WithAll<GenerateRegion>()
+            .ForEach((int entityInQueryIndex, Entity e, in Region region) =>
+            {
+                var map = ecb.AddBuffer<HeightMap>(entityInQueryIndex, e);
+                map.ResizeUninitialized(chunkSize * chunkSize);
+                var arr = map.Reinterpret<ushort>().AsNativeArray();
+
+                int2 regionIndex = region.Index;
+                int2 origin = regionIndex * chunkSize;
+
+                BuildMap(
+                    arr,
+                    chunkSize,
+                    origin,
+                    genSettings,
+                    out int highest);
+
+                if (highest == 0)
+                    return;
+
+                int maxChunkHeight = highest / Grid3D.CellSizeY;
+
+                for(int chunkIndexY = 0; chunkIndexY <= maxChunkHeight; ++chunkIndexY )
                 {
-                    var map = ecb.AddBuffer<HeightMap>(entityInQueryIndex, e);
-                    map.ResizeUninitialized(chunkSize * chunkSize);
-                    var arr = map.Reinterpret<ushort>().AsNativeArray();
+                    var chunkIndex = new int3(regionIndex.x, chunkIndexY, regionIndex.y);
+                    var chunk = ecb.Instantiate(entityInQueryIndex, chunkPrefab);
 
-                    int2 regionIndex = region.Index;
-                    int2 origin = regionIndex * chunkSize;
-
-                    BuildMap(
-                        arr,
-                        chunkSize,
-                        origin,
-                        genSettings,
-                        out int highest);
-
-                    if (highest == 0)
-                        return;
-
-                    int maxChunkHeight = highest / Grid3D.CellSizeY;
-
-                    for(int chunkIndexY = 0; chunkIndexY <= maxChunkHeight; ++chunkIndexY )
+                    ecb.SetComponent(entityInQueryIndex, chunk, new VoxelChunk
                     {
-                        int3 chunkIndex = new int3(regionIndex.x, chunkIndexY, regionIndex.y);
+                        Index = chunkIndex,
+                        Region = e
+                    });
 
-                        VoxelWorldOperations.AddChunkToRegion(ecb, entityInQueryIndex, chunkIndex, chunkPrefab, e);
-                    }
-                }).ScheduleParallel();
+                    ecb.AppendToBuffer<LinkedEntityGroup>(entityInQueryIndex, e, chunk);
+                    ecb.AddComponent<GenerateChunk>(entityInQueryIndex, chunk);
+                }
+            }).ScheduleParallel();
 
             _endSimBarrier.AddJobHandleForProducer(Dependency);
         }

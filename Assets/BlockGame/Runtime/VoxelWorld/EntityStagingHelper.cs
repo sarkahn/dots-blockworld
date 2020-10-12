@@ -102,7 +102,6 @@ namespace Sark.BlockGame
     {
         public ExclusiveEntityTransaction Transaction { get; set; }
         public int Amount { get; set; }
-        public VoxelChunkBuilder Builder { get; set; }
         public Entity Prefab { get; set; }
 
         public void Execute()

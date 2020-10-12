@@ -96,6 +96,24 @@ namespace Sark.BlockGame.Tests
         }
 
         [Test]
+        public void SetBlockCreatesChunk()
+        {
+            var world = VoxelWorld;
+            world.SetBlock(16, 0, 0, 1);
+
+            var q = GetEntityQuery(
+                typeof(VoxelChunk),
+                typeof(VoxelChunkBlocks),
+                typeof(ChunkMeshVerts),
+                typeof(ChunkMeshIndices),
+                typeof(ChunkMeshUVs));
+
+            World.Update();
+
+            Assert.AreEqual(1, q.CalculateEntityCount());
+        }
+
+        [Test]
         public void AdjacentChunkBlocksTest()
         {
             var world = VoxelWorld;
@@ -118,36 +136,6 @@ namespace Sark.BlockGame.Tests
             adj = world.GetAdjacentChunkBlocks(0, 0, 0);
 
             Assert.IsTrue(adj.Up.IsCreated);
-        }
-
-        [Test]
-        public void ChunkMeshTest()
-        {
-            var world = VoxelWorld;
-
-            world.SetBlock(0, 0, 0, 1);
-            world.SetBlock(-1, 0, 0, 1);
-
-            world.TryGetVoxelChunkFromIndex(0, 0, 0, out Entity originChunk);
-            world.TryGetVoxelChunkFromIndex(-1, 0, 0, out Entity westChunk);
-
-            Assert.IsFalse(originChunk == Entity.Null);
-            Assert.IsFalse(westChunk == Entity.Null);
-
-            Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(originChunk));
-            Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(westChunk));
-
-            // Tag chunks for mesh update inside SetBlock, then call world.update
-
-            var originVerts = EntityManager.GetBuffer<ChunkMeshVerts>(originChunk);
-            var westVerts = EntityManager.GetBuffer<ChunkMeshVerts>(westChunk);
-
-            int expectedFaces = 5;
-            int vertsPerFace = 4;
-            int expectedVerts = expectedFaces * vertsPerFace;
-
-            Assert.AreEqual(expectedVerts, originVerts.Length);
-            Assert.AreEqual(expectedVerts, westVerts.Length);
         }
 
         [Test]
@@ -188,6 +176,58 @@ namespace Sark.BlockGame.Tests
             Assert.IsTrue(EntityManager.HasComponent<VoxelChunk>(chunkPrefab));
             Assert.IsTrue(EntityManager.HasComponent<Prefab>(chunkPrefab));
         }
-    }
 
+        [Test]
+        public void ChunkMeshTest()
+        {
+            var world = VoxelWorld;
+
+            world.SetBlock(10, 10, 10, 1);
+
+            World.Update();
+
+            var chunk = world.GetVoxelChunkFromIndex(0, 0, 0);
+
+            var verts = EntityManager.GetBuffer<ChunkMeshVerts>(chunk);
+
+            Assert.AreEqual(4 * 6, verts.Length);
+        }
+
+        [Test]
+        public void ChunkMeshEdgeTest()
+        {
+            var world = VoxelWorld;
+
+            world.SetBlock(0, 0, 0, 1);
+            world.SetBlock(-1, 0, 0, 1);
+
+            world.TryGetVoxelChunkFromIndex(0, 0, 0, out Entity originChunk);
+            world.TryGetVoxelChunkFromIndex(-1, 0, 0, out Entity westChunk);
+
+            Assert.IsFalse(originChunk == Entity.Null);
+            Assert.IsFalse(westChunk == Entity.Null);
+
+            Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(originChunk));
+            Assert.IsTrue(EntityManager.HasComponent<ChunkMeshVerts>(westChunk));
+
+            // Chunks should be tagged for mesh update inside SetBlock
+            World.Update();
+
+            var originVerts = EntityManager.GetBuffer<ChunkMeshVerts>(originChunk);
+            var westVerts = EntityManager.GetBuffer<ChunkMeshVerts>(westChunk);
+
+            Assert.IsTrue(originVerts.IsCreated);
+            Assert.IsTrue(westVerts.IsCreated);
+
+            Assert.NotZero(originVerts.Length);
+            Assert.NotZero(westVerts.Length);
+
+            int expectedFaces = 5;
+            int vertsPerFace = 4;
+            int expectedVerts = expectedFaces * vertsPerFace;
+
+            Assert.AreEqual(expectedVerts, originVerts.Length);
+            Assert.AreEqual(expectedVerts, westVerts.Length);
+        }
+    }
 }

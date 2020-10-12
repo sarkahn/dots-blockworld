@@ -20,7 +20,7 @@ namespace Sark.BlockGame
         public NativeHashMap<int3, Entity> ChunkMap;
 
         public VoxelWorldState(
-            VoxelWorldSystem system,
+            SystemBase system,
             NativeHashMap<int2, Entity> regionMap,
             NativeHashMap<int3, Entity> chunkMap,
             bool readOnly = false)

@@ -10,7 +10,7 @@ namespace Sark.BlockGame
 
     public class RegionLoaderAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     {
-        public int Range;
+        public int Range = 5;
 
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
